@@ -39,7 +39,6 @@ button,select,input{
   margin:4px;
   cursor:pointer;
 }
-
 /* MODAL */
 .modal{
   position:fixed;
@@ -72,7 +71,6 @@ button,select,input{
   width:100%;
   margin-top:10px;
 }
-
 /* ARROW CONTROLS - NEON STYLE */
 #controls {
   display: flex;
@@ -105,13 +103,32 @@ button,select,input{
   transform: scale(1);
   box-shadow: 0 0 10px #22c55e inset;
 }
-
 /* SPEED CONTROL */
 #speedControl{
   margin-top:10px;
 }
 #speedRange{
   width:150px;
+}
+/* Instagram link */
+#social a{
+  text-decoration:none;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  color:#e5e7eb;
+  margin-top:10px;
+}
+#social a img{
+  filter: brightness(0) invert(1);
+  transition: transform 0.2s ease;
+}
+#social a:hover{
+  color:#22c55e;
+}
+#social a:hover img{
+  transform: scale(1.2);
 }
 </style>
 </head>
@@ -153,6 +170,14 @@ button,select,input{
   </div>
 
   <p style="opacity:.7">Use Arrow Keys or On-Screen Buttons</p>
+
+  <!-- Instagram -->
+  <div id="social">
+    <a href="https://www.instagram.com/sinan._u" target="_blank">
+      <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="24" height="24" alt="Instagram">
+      <span>@sinan._u</span>
+    </a>
+  </div>
 </div>
 
 <!-- GAME OVER MODAL -->
@@ -272,7 +297,6 @@ function update(){
     gameOver(); return;
   }
   snake.unshift(head);
-
   if(head.x===food.x&&head.y===food.y){
     score++;
     scoreEl.textContent=score;
@@ -283,7 +307,6 @@ function update(){
     spawnParticles(food.x*box,food.y*box,"#22c55e",20);
     food=spawnFood();
   }else snake.pop();
-
   updateParticles();
   draw();
 }
@@ -329,5 +352,6 @@ function closeModal(){
   ui.classList.remove("blur");
 }
 </script>
+
 </body>
 </html>
