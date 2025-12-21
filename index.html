@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Snake Pro 🐍</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <style>
 body{
   margin:0;
@@ -26,14 +25,12 @@ body{
   text-align:center;
 }
 .blur{filter:blur(6px)}
-
 canvas{
   background:#020617;
   border-radius:12px;
   border:2px solid #22c55e;
 }
-
-button,select{
+button,select,input{
   background:#020617;
   color:white;
   border:1px solid #1f2937;
@@ -54,7 +51,6 @@ button,select{
   z-index:999;
 }
 .hidden{display:none}
-
 .modal-card{
   background:#020617;
   border:1px solid #1f2937;
@@ -72,9 +68,53 @@ button,select{
   font-size:48px;
   color:#22c55e;
 }
+.modal-card button{
+  width:100%;
+  margin-top:10px;
+}
+
+/* ARROW CONTROLS - NEON STYLE */
+#controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 10px;
+}
+#controls div{
+  display: flex;
+  justify-content: center;
+}
+#controls button{
+  width:60px;
+  height:60px;
+  font-size:28px;
+  margin:5px;
+  border-radius:50%;
+  border:none;
+  background:linear-gradient(145deg,#0ea5e9,#22c55e);
+  color:white;
+  cursor:pointer;
+  box-shadow: 0 0 10px #22c55e,0 0 20px #0ea5e9,0 0 30px #22c55e inset;
+  transition: all 0.2s ease;
+}
+#controls button:hover{
+  transform: scale(1.15);
+  box-shadow: 0 0 20px #22c55e,0 0 30px #0ea5e9,0 0 40px #22c55e inset;
+}
+#controls button:active{
+  transform: scale(1);
+  box-shadow: 0 0 10px #22c55e inset;
+}
+
+/* SPEED CONTROL */
+#speedControl{
+  margin-top:10px;
+}
+#speedRange{
+  width:150px;
+}
 </style>
 </head>
-
 <body>
 
 <div id="ui">
@@ -93,8 +133,26 @@ button,select{
     <button onclick="pause()">⏸ Pause</button>
   </div>
 
+  <!-- Speed Control -->
+  <div id="speedControl">
+    <label for="speedRange">Speed:</label>
+    <input type="range" id="speedRange" min="50" max="300" value="110" step="10">
+    <span id="speedValue">110ms</span>
+  </div>
+
   <canvas id="canvas" width="380" height="380"></canvas>
-  <p style="opacity:.7">Use Arrow Keys</p>
+
+  <!-- ARROW BUTTONS -->
+  <div id="controls">
+    <div><button onclick="setDir(0,-1)">⬆️</button></div>
+    <div>
+      <button onclick="setDir(-1,0)">⬅️</button>
+      <button onclick="setDir(1,0)">➡️</button>
+    </div>
+    <div><button onclick="setDir(0,1)">⬇️</button></div>
+  </div>
+
+  <p style="opacity:.7">Use Arrow Keys or On-Screen Buttons</p>
 </div>
 
 <!-- GAME OVER MODAL -->
@@ -109,13 +167,10 @@ button,select{
 </div>
 
 <!-- SOUNDS -->
-<audio id="eatSound">
-  <source src="Untitled video - Made with Clipchamp.m4a">
-</audio>
-
-<audio id="failSound">
-  <source src="Untitled video2 - Made with Clipchamp.m4a">
-</audio>
+<audio id="eatSound1" preload="auto"><source src="Untitled video - Made with Clipchamp.m4a"></audio>
+<audio id="eatSound2" preload="auto"><source src="Untitled video - Made with Clipchamp.m4a"></audio>
+<audio id="eatSound3" preload="auto"><source src="Untitled video - Made with Clipchamp.m4a"></audio>
+<audio id="failSound" preload="auto"><source src="Untitled video2 - Made with Clipchamp.m4a"></audio>
 
 <script>
 const canvas=document.getElementById("canvas");
@@ -130,8 +185,17 @@ const modal=document.getElementById("gameOverModal");
 const finalScoreEl=document.getElementById("finalScore");
 const ui=document.getElementById("ui");
 
-const eatSound=document.getElementById("eatSound");
+const eatSounds=[
+  document.getElementById("eatSound1"),
+  document.getElementById("eatSound2"),
+  document.getElementById("eatSound3")
+];
+let eatIndex=0; 
 const failSound=document.getElementById("failSound");
+
+const speedRange=document.getElementById("speedRange");
+const speedValue=document.getElementById("speedValue");
+let gameSpeed=parseInt(speedRange.value);
 
 let snake,food,dir,game,paused=false;
 let score=0,particles=[];
@@ -153,6 +217,7 @@ function reset(){
   particles=[];
   scoreEl.textContent=0;
 }
+
 reset();
 
 document.addEventListener("keydown",e=>{
@@ -162,57 +227,59 @@ document.addEventListener("keydown",e=>{
   if(e.key==="ArrowDown"&&dir.y!==-1)dir={x:0,y:1};
 });
 
+function setDir(x,y){
+  if((x===-dir.x && y===-dir.y) || paused) return;
+  dir={x,y};
+}
+
+speedRange.addEventListener("input", ()=>{
+  gameSpeed=parseInt(speedRange.value);
+  speedValue.textContent=gameSpeed+"ms";
+  if(game){
+    clearInterval(game);
+    game=setInterval(update,gameSpeed);
+  }
+});
+
 function start(){
   clearInterval(game);
   closeModal();
   reset();
-  game=setInterval(update,110);
+  game=setInterval(update,gameSpeed);
 }
 function pause(){paused=!paused}
 
 function spawnFood(){
-  return{x:Math.floor(Math.random()*cells),y:Math.floor(Math.random()*cells)}
+  return {x:Math.floor(Math.random()*cells), y:Math.floor(Math.random()*cells)};
 }
 
 function spawnParticles(x,y,color,count){
   for(let i=0;i<count;i++){
-    particles.push({
-      x:x+box/2,y:y+box/2,
-      vx:(Math.random()-.5)*4,
-      vy:(Math.random()-.5)*4,
-      life:30,color
-    });
+    particles.push({x:x+box/2, y:y+box/2, vx:(Math.random()-.5)*4, vy:(Math.random()-.5)*4, life:30, color});
   }
 }
 
 function updateParticles(){
-  particles.forEach(p=>{
-    p.x+=p.vx;p.y+=p.vy;p.life--;
-  });
+  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;});
   particles=particles.filter(p=>p.life>0);
 }
 
 function update(){
-  if(paused)return;
-
+  if(paused) return;
   let head={...snake[0]};
   head.x+=dir.x; head.y+=dir.y;
-
-  if(
-    head.x<0||head.y<0||
-    head.x>=cells||head.y>=cells||
-    snake.some(s=>s.x===head.x&&s.y===head.y)
-  ){
+  if(head.x<0||head.y<0||head.x>=cells||head.y>=cells||snake.some(s=>s.x===head.x&&s.y===head.y)){
     gameOver(); return;
   }
-
   snake.unshift(head);
 
   if(head.x===food.x&&head.y===food.y){
     score++;
     scoreEl.textContent=score;
-    eatSound.currentTime=0;
-    eatSound.play();
+    const currentSound=eatSounds[eatIndex];
+    currentSound.currentTime=0;
+    currentSound.play();
+    eatIndex=(eatIndex+1)%eatSounds.length;
     spawnParticles(food.x*box,food.y*box,"#22c55e",20);
     food=spawnFood();
   }else snake.pop();
@@ -223,10 +290,8 @@ function update(){
 
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-
   ctx.fillStyle="#ef4444";
   ctx.fillRect(food.x*box,food.y*box,box,box);
-
   const skin=skins[skinSel.value];
   snake.forEach((s,i)=>{
     ctx.fillStyle=i===0?skin.head:skin.body;
@@ -235,7 +300,6 @@ function draw(){
     ctx.fillRect(s.x*box,s.y*box,box,box);
   });
   ctx.shadowBlur=0;
-
   particles.forEach(p=>{
     ctx.globalAlpha=p.life/30;
     ctx.fillStyle=p.color;
@@ -250,13 +314,11 @@ function gameOver(){
   clearInterval(game);
   failSound.currentTime=0;
   failSound.play();
-
   if(score>best){
     best=score;
     localStorage.setItem("snakeBest",best);
     bestEl.textContent=best;
   }
-
   finalScoreEl.textContent=score;
   modal.classList.remove("hidden");
   ui.classList.add("blur");
@@ -267,6 +329,5 @@ function closeModal(){
   ui.classList.remove("blur");
 }
 </script>
-
 </body>
 </html>
