@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Snake Pro 🐍</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <style>
 body{
   margin:0;
@@ -39,6 +40,7 @@ button,select,input{
   margin:4px;
   cursor:pointer;
 }
+
 /* MODAL */
 .modal{
   position:fixed;
@@ -63,75 +65,32 @@ button,select,input{
   from{transform:scale(.6);opacity:0}
   to{transform:scale(1);opacity:1}
 }
-.modal-card h1{
-  font-size:48px;
-  color:#22c55e;
-}
-.modal-card button{
-  width:100%;
-  margin-top:10px;
-}
-/* ARROW CONTROLS - NEON STYLE */
-#controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 10px;
-}
-#controls div{
-  display: flex;
-  justify-content: center;
-}
+
+/* Controls */
+#controls{display:flex;flex-direction:column;align-items:center;margin-top:10px}
+#controls div{display:flex}
 #controls button{
-  width:60px;
-  height:60px;
-  font-size:28px;
-  margin:5px;
-  border-radius:50%;
-  border:none;
+  width:60px;height:60px;font-size:28px;margin:5px;
+  border-radius:50%;border:none;
   background:linear-gradient(145deg,#0ea5e9,#22c55e);
-  color:white;
-  cursor:pointer;
-  box-shadow: 0 0 10px #22c55e,0 0 20px #0ea5e9,0 0 30px #22c55e inset;
-  transition: all 0.2s ease;
+  box-shadow:0 0 15px #22c55e inset;
 }
-#controls button:hover{
-  transform: scale(1.15);
-  box-shadow: 0 0 20px #22c55e,0 0 30px #0ea5e9,0 0 40px #22c55e inset;
-}
-#controls button:active{
-  transform: scale(1);
-  box-shadow: 0 0 10px #22c55e inset;
-}
-/* SPEED CONTROL */
-#speedControl{
-  margin-top:10px;
-}
-#speedRange{
-  width:150px;
-}
-/* Instagram link */
+#controls button:hover{transform:scale(1.15)}
+
+/* Speed */
+#speedControl{margin-top:10px}
+#speedRange{width:150px}
+
+/* Instagram */
 #social a{
-  text-decoration:none;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:6px;
-  color:#e5e7eb;
-  margin-top:10px;
+  display:flex;justify-content:center;align-items:center;
+  gap:6px;text-decoration:none;color:#e5e7eb;margin-top:10px
 }
-#social a img{
-  filter: brightness(0) invert(1);
-  transition: transform 0.2s ease;
-}
-#social a:hover{
-  color:#22c55e;
-}
-#social a:hover img{
-  transform: scale(1.2);
-}
+#social img{filter:invert(1);transition:.2s}
+#social a:hover img{transform:scale(1.2)}
 </style>
 </head>
+
 <body>
 
 <div id="ui">
@@ -150,16 +109,16 @@ button,select,input{
     <button onclick="pause()">⏸ Pause</button>
   </div>
 
-  <!-- Speed Control -->
+  <!-- Speed -->
   <div id="speedControl">
-    <label for="speedRange">Speed:</label>
-    <input type="range" id="speedRange" min="50" max="300" value="110" step="10">
-    <span id="speedValue">110ms</span>
+    Speed:
+    <input type="range" id="speedRange" min="50" max="300" value="210" step="10">
+    <span id="speedValue">210ms</span>
   </div>
 
   <canvas id="canvas" width="380" height="380"></canvas>
 
-  <!-- ARROW BUTTONS -->
+  <!-- Arrow buttons -->
   <div id="controls">
     <div><button onclick="setDir(0,-1)">⬆️</button></div>
     <div>
@@ -169,187 +128,136 @@ button,select,input{
     <div><button onclick="setDir(0,1)">⬇️</button></div>
   </div>
 
-  <p style="opacity:.7">Use Arrow Keys or On-Screen Buttons</p>
-
-  <!-- Instagram -->
   <div id="social">
     <a href="https://www.instagram.com/sinan._u" target="_blank">
-      <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="24" height="24" alt="Instagram">
+      <img src="https://cdn-icons-png.flaticon.com/512/2111/2111463.png" width="24">
       <span>@sinan._u</span>
     </a>
   </div>
 </div>
 
-<!-- GAME OVER MODAL -->
+<!-- GAME OVER -->
 <div id="gameOverModal" class="modal hidden">
   <div class="modal-card">
     <h2>Game Over</h2>
-    <p>Your Final Score</p>
+    <p>Your Score</p>
     <h1 id="finalScore">0</h1>
     <button onclick="start()">Play Again</button>
-    <button onclick="closeModal()">Close</button>
   </div>
 </div>
 
-<!-- SOUNDS -->
-<audio id="eatSound1" preload="auto"><source src="Untitled video - Made with Clipchamp.m4a"></audio>
-<audio id="eatSound2" preload="auto"><source src="Untitled video - Made with Clipchamp.m4a"></audio>
-<audio id="eatSound3" preload="auto"><source src="Untitled video - Made with Clipchamp.m4a"></audio>
-<audio id="failSound" preload="auto"><source src="Untitled video2 - Made with Clipchamp.m4a"></audio>
+<!-- Sounds -->
+<audio id="eat1" src="eat1.mp3"></audio>
+<audio id="eat2" src="eat2.mp3"></audio>
+<audio id="eat3" src="eat3.mp3"></audio>
+<audio id="fail" src="fail.mp3"></audio>
 
 <script>
 const canvas=document.getElementById("canvas");
 const ctx=canvas.getContext("2d");
-const box=20;
-const cells=canvas.width/box;
+const box=20, cells=canvas.width/box;
 
-const scoreEl=document.getElementById("score");
-const bestEl=document.getElementById("best");
-const skinSel=document.getElementById("skin");
-const modal=document.getElementById("gameOverModal");
-const finalScoreEl=document.getElementById("finalScore");
-const ui=document.getElementById("ui");
+let snake,food,dir,game,paused=false;
+let score=0;
+let best=localStorage.getItem("snakeBest")||0;
+best.textContent=best;
 
-const eatSounds=[
-  document.getElementById("eatSound1"),
-  document.getElementById("eatSound2"),
-  document.getElementById("eatSound3")
-];
-let eatIndex=0; 
-const failSound=document.getElementById("failSound");
+const skins={
+ green:{h:"#86efac",b:"#22c55e"},
+ blue:{h:"#7dd3fc",b:"#0ea5e9"},
+ fire:{h:"#fde047",b:"#f97316"},
+ galaxy:{h:"#e879f9",b:"#8b5cf6"}
+};
+
+const eat=[eat1,eat2,eat3];
+let ei=0;
 
 const speedRange=document.getElementById("speedRange");
 const speedValue=document.getElementById("speedValue");
-let gameSpeed=parseInt(speedRange.value);
+let gameSpeed=210;
 
-let snake,food,dir,game,paused=false;
-let score=0,particles=[];
-let best=localStorage.getItem("snakeBest")||0;
-bestEl.textContent=best;
-
-const skins={
-  green:{head:"#86efac",body:"#22c55e"},
-  blue:{head:"#7dd3fc",body:"#0ea5e9"},
-  fire:{head:"#fde047",body:"#f97316"},
-  galaxy:{head:"#e879f9",body:"#8b5cf6"}
+speedRange.oninput=()=>{
+ gameSpeed=parseInt(speedRange.value);
+ speedValue.textContent=gameSpeed+"ms";
+ if(game){
+  clearInterval(game);
+  game=setInterval(update,gameSpeed);
+ }
 };
 
 function reset(){
-  snake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
-  food=spawnFood();
-  dir={x:1,y:0};
-  score=0;
-  particles=[];
-  scoreEl.textContent=0;
+ snake=[{x:10,y:10},{x:9,y:10},{x:8,y:10}];
+ food=spawnFood();
+ dir={x:1,y:0};
+ score=0;
+ score.textContent=0;
 }
-
-reset();
-
-document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft"&&dir.x!==1)dir={x:-1,y:0};
-  if(e.key==="ArrowRight"&&dir.x!==-1)dir={x:1,y:0};
-  if(e.key==="ArrowUp"&&dir.y!==1)dir={x:0,y:-1};
-  if(e.key==="ArrowDown"&&dir.y!==-1)dir={x:0,y:1};
-});
-
-function setDir(x,y){
-  if((x===-dir.x && y===-dir.y) || paused) return;
-  dir={x,y};
-}
-
-speedRange.addEventListener("input", ()=>{
-  gameSpeed=parseInt(speedRange.value);
-  speedValue.textContent=gameSpeed+"ms";
-  if(game){
-    clearInterval(game);
-    game=setInterval(update,gameSpeed);
-  }
-});
 
 function start(){
-  clearInterval(game);
-  closeModal();
-  reset();
-  game=setInterval(update,gameSpeed);
+ clearInterval(game);
+ gameOverModal.classList.add("hidden");
+ ui.classList.remove("blur");
+ reset();
+ game=setInterval(update,gameSpeed);
 }
+
 function pause(){paused=!paused}
+function setDir(x,y){if(x===-dir.x&&y===-dir.y)return;dir={x,y}}
+
+document.addEventListener("keydown",e=>{
+ if(e.key==="ArrowLeft")setDir(-1,0);
+ if(e.key==="ArrowRight")setDir(1,0);
+ if(e.key==="ArrowUp")setDir(0,-1);
+ if(e.key==="ArrowDown")setDir(0,1);
+});
 
 function spawnFood(){
-  return {x:Math.floor(Math.random()*cells), y:Math.floor(Math.random()*cells)};
-}
-
-function spawnParticles(x,y,color,count){
-  for(let i=0;i<count;i++){
-    particles.push({x:x+box/2, y:y+box/2, vx:(Math.random()-.5)*4, vy:(Math.random()-.5)*4, life:30, color});
-  }
-}
-
-function updateParticles(){
-  particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.life--;});
-  particles=particles.filter(p=>p.life>0);
+ return{x:Math.floor(Math.random()*cells),y:Math.floor(Math.random()*cells)}
 }
 
 function update(){
-  if(paused) return;
-  let head={...snake[0]};
-  head.x+=dir.x; head.y+=dir.y;
-  if(head.x<0||head.y<0||head.x>=cells||head.y>=cells||snake.some(s=>s.x===head.x&&s.y===head.y)){
-    gameOver(); return;
-  }
-  snake.unshift(head);
-  if(head.x===food.x&&head.y===food.y){
-    score++;
-    scoreEl.textContent=score;
-    const currentSound=eatSounds[eatIndex];
-    currentSound.currentTime=0;
-    currentSound.play();
-    eatIndex=(eatIndex+1)%eatSounds.length;
-    spawnParticles(food.x*box,food.y*box,"#22c55e",20);
-    food=spawnFood();
-  }else snake.pop();
-  updateParticles();
-  draw();
+ if(paused)return;
+ let h={...snake[0]};
+ h.x+=dir.x; h.y+=dir.y;
+
+ if(h.x<0||h.y<0||h.x>=cells||h.y>=cells||snake.some(s=>s.x===h.x&&s.y===h.y)){
+  gameOver(); return;
+ }
+
+ snake.unshift(h);
+
+ if(h.x===food.x&&h.y===food.y){
+  score++; score.textContent=score;
+  eat[ei++%eat.length].currentTime=0;
+  eat[ei%eat.length].play();
+  food=spawnFood();
+ }else snake.pop();
+
+ draw();
 }
 
 function draw(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle="#ef4444";
-  ctx.fillRect(food.x*box,food.y*box,box,box);
-  const skin=skins[skinSel.value];
-  snake.forEach((s,i)=>{
-    ctx.fillStyle=i===0?skin.head:skin.body;
-    ctx.shadowColor=skin.body;
-    ctx.shadowBlur=10;
-    ctx.fillRect(s.x*box,s.y*box,box,box);
-  });
-  ctx.shadowBlur=0;
-  particles.forEach(p=>{
-    ctx.globalAlpha=p.life/30;
-    ctx.fillStyle=p.color;
-    ctx.beginPath();
-    ctx.arc(p.x,p.y,3,0,Math.PI*2);
-    ctx.fill();
-    ctx.globalAlpha=1;
-  });
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ ctx.fillStyle="#ef4444";
+ ctx.fillRect(food.x*box,food.y*box,box,box);
+ const s=skins[skin.value];
+ snake.forEach((p,i)=>{
+  ctx.fillStyle=i?s.b:s.h;
+  ctx.fillRect(p.x*box,p.y*box,box,box);
+ });
 }
 
 function gameOver(){
-  clearInterval(game);
-  failSound.currentTime=0;
-  failSound.play();
-  if(score>best){
-    best=score;
-    localStorage.setItem("snakeBest",best);
-    bestEl.textContent=best;
-  }
-  finalScoreEl.textContent=score;
-  modal.classList.remove("hidden");
-  ui.classList.add("blur");
-}
-
-function closeModal(){
-  modal.classList.add("hidden");
-  ui.classList.remove("blur");
+ clearInterval(game);
+ fail.currentTime=0; fail.play();
+ if(score>best){
+  best=score;
+  localStorage.setItem("snakeBest",best);
+  document.getElementById("best").textContent=best;
+ }
+ finalScore.textContent=score;
+ gameOverModal.classList.remove("hidden");
+ ui.classList.add("blur");
 }
 </script>
 
